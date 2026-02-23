@@ -50,13 +50,28 @@
         .search-wrapper i { position: absolute; left: 15px; top: 14px; color: var(--text-sub); }
         .search-wrapper input { width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #edf2f7; border-radius: 12px; font-size: 14px; box-sizing: border-box; text-transform: uppercase; }
 
-        .filter-select { 
-            padding: 12px 15px; border-radius: 12px; border: 1px solid #edf2f7; 
-            background: white; cursor: pointer; font-size: 12px; font-weight: 700; 
-            color: var(--text-sub); transition: 0.3s; text-transform: uppercase; 
-            min-width: 180px; outline: none;
+        .multi-filter {
+            position: relative;
+            min-width: 200px;
         }
-        .filter-select:focus { border-color: var(--primary); }
+        .multi-filter-btn {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #edf2f7; 
+            background: white; cursor: pointer; font-size: 12px; font-weight: 700; 
+            color: var(--text-sub); transition: 0.3s; text-transform: uppercase;
+            text-align: left; display: flex; justify-content: space-between; align-items: center;
+        }
+        .multi-filter-content {
+            display: none; position: absolute; top: 110%; left: 0; width: 100%;
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100; max-height: 250px; overflow-y: auto; padding: 10px; border: 1px solid #edf2f7;
+        }
+        .multi-filter-content label {
+            display: flex; align-items: center; gap: 10px; padding: 8px;
+            font-size: 12px; font-weight: 600; color: var(--text-main); cursor: pointer;
+            border-radius: 6px; transition: 0.2s;
+        }
+        .multi-filter-content label:hover { background: #f0f4ff; }
+        .multi-filter-content input { width: 16px; height: 16px; cursor: pointer; }
 
         .filter-btn { padding: 12px 15px; border-radius: 12px; border: 1px solid #edf2f7; background: white; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text-sub); transition: 0.3s; display: flex; align-items: center; gap: 8px; }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -85,6 +100,15 @@
             background: var(--success); color: white; border: none; padding: 4px 8px; border-radius: 6px;
             cursor: pointer; font-size: 12px; margin-left: 5px; display: none;
         }
+
+        .action-btns { display: flex; gap: 8px; align-items: center; }
+        .btn-reset-tool { 
+            border: none; background: #f1f5f9; color: var(--text-sub); 
+            width: 32px; height: 32px; border-radius: 8px; cursor: pointer; 
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .btn-reset-tool:hover { background: var(--primary); color: white; }
+        .btn-reset-tool.danger-hover:hover { background: var(--danger); color: white; }
 
         #toast-box { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
         .toast { 
@@ -123,7 +147,6 @@
         .active-item b { color: var(--primary); }
         .active-item small { color: var(--text-sub); font-weight: 600; }
         .btn { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-        .btn-add { background: var(--primary); color: white; }
         
         .sidebar-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 25px; }
         
@@ -214,12 +237,14 @@
                     <label style="margin:0; white-space: nowrap;">FILTRAR POR DATA:</label>
                     <input type="date" id="filtroDataHist" onchange="fetchHistorico()" style="width: 200px; padding: 10px; border-radius: 10px; border: 1px solid #edf2f7;">
                 </div>
-                <div class="input-group" style="flex-direction: row; align-items: center; gap: 15px;">
-                    <label style="margin:0; white-space: nowrap;">SETOR:</label>
-                    <select id="filtroSetorHist" onchange="renderizarHistorico()" style="width: 200px; padding: 10px; border-radius: 10px; border: 1px solid #edf2f7; text-transform: uppercase;">
-                        <option value="">TODOS</option>
-                    </select>
+                
+                <div class="multi-filter">
+                    <button class="multi-filter-btn" onclick="toggleDropdown('dropdownHist')">
+                        <span id="labelHist">TODOS OS GRUPOS</span> <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div id="dropdownHist" class="multi-filter-content"></div>
                 </div>
+
                 <div class="search-wrapper" style="width: 350px; margin-left: 10px;">
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" id="searchHistInput" placeholder="Pesquisar Remanejo ou Separador..." onkeyup="renderizarHistorico()" style="text-transform: uppercase;">
@@ -303,7 +328,7 @@
                     <label for="m-separador">Separador</label>
                     <input type="text" id="m-separador" placeholder="Nome + Enter" onkeydown="if(event.key==='Enter') adicionarManual()">
                 </div>
-                <button class="btn btn-add" id="btn-inserir" onclick="adicionarManual()">
+                <button class="btn btn-add" id="btn-inserir" style="background: var(--primary); color: white;" onclick="adicionarManual()">
                     <i class="fa-solid fa-play"></i> Inserir e Iniciar
                 </button>
             </div>
@@ -320,9 +345,14 @@
             <button id="filterFinalizado" class="filter-btn success" onclick="toggleFiltro('finalizado')">
                 <i class="fa-solid fa-check-double"></i> FINALIZADOS
             </button>
-            <select id="filtroSetorTabela" class="filter-select" onchange="renderizarTabela()">
-                <option value="">TODOS OS GRUPOS</option>
-            </select>
+            
+            <div class="multi-filter">
+                <button class="multi-filter-btn" onclick="toggleDropdown('dropdownTabela')">
+                    <span id="labelTabela">TODOS OS GRUPOS</span> <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div id="dropdownTabela" class="multi-filter-content"></div>
+            </div>
+
             <button class="btn" style="background: var(--success); color: white;" onclick="exportarExcel()">
                 <i class="fa-solid fa-file-excel"></i> Exportar
             </button>
@@ -343,9 +373,12 @@
     <aside class="sidebar">
         <div class="sidebar-card" style="padding: 15px 25px;">
             <label style="font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase;">Filtrar Lateral por Setor</label>
-            <select id="filtroSetorSidebar" onchange="renderizarTabela()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #edf2f7; margin-top: 5px; text-transform: uppercase; background: #f8fafc; outline: none;">
-                <option value="">TODOS OS SETORES</option>
-            </select>
+            <div class="multi-filter" style="margin-top: 5px;">
+                <button class="multi-filter-btn" onclick="toggleDropdown('dropdownSidebar')">
+                    <span id="labelSidebar">TODOS OS SETORES</span> <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div id="dropdownSidebar" class="multi-filter-content"></div>
+            </div>
         </div>
         <div class="sidebar-card">
             <h2 style="font-size: 15px; margin-bottom: 20px;"><i class="fa-solid fa-clock" style="color: var(--primary)"></i> Em Andamento</h2>
@@ -370,25 +403,53 @@
     let filtroAtivo = null;
     let historicoFiltradoExibicao = [];
 
+    let setoresSelecionadosTabela = [];
+    let setoresSelecionadosSidebar = [];
+    let setoresSelecionadosHist = [];
+
     const LOCAL_KEY = 'remanejos_parados';
 
     function getSetor(grupo) {
         return (grupo || "").split('-')[0].trim().toUpperCase();
     }
 
-    function atualizarSelectSetores(setores, selectId) {
-        const select = document.getElementById(selectId);
-        const valAtual = select.value;
-        select.innerHTML = (selectId === 'filtroSetorTabela' || selectId === 'filtroSetorHist') ? '<option value="">TODOS OS GRUPOS</option>' : '<option value="">TODOS OS SETORES</option>';
-        Array.from(setores).sort().forEach(s => {
-            if (s) {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.innerText = s;
-                select.appendChild(opt);
-            }
+    function toggleDropdown(id) {
+        const drop = document.getElementById(id);
+        const allDrops = document.querySelectorAll('.multi-filter-content');
+        allDrops.forEach(d => { if(d.id !== id) d.style.display = 'none'; });
+        drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.multi-filter')) {
+            document.querySelectorAll('.multi-filter-content').forEach(d => d.style.display = 'none');
+        }
+    });
+
+    function atualizarMultiSelect(setores, dropId, selecionados, labelId, callback) {
+        const drop = document.getElementById(dropId);
+        const label = document.getElementById(labelId);
+        if (!drop) return;
+
+        drop.innerHTML = "";
+        const sorted = Array.from(setores).sort();
+        
+        sorted.forEach(s => {
+            if (!s) return;
+            const isChecked = selecionados.includes(s);
+            const item = document.createElement('label');
+            item.innerHTML = `<input type="checkbox" value="${s}" ${isChecked ? 'checked' : ''}> ${s}`;
+            item.querySelector('input').onchange = (e) => {
+                if (e.target.checked) selecionados.push(s);
+                else {
+                    const idx = selecionados.indexOf(s);
+                    if (idx > -1) selecionados.splice(idx, 1);
+                }
+                label.innerText = selecionados.length > 0 ? `${selecionados.length} SELEC.` : (dropId === 'dropdownSidebar' ? 'TODOS OS SETORES' : 'TODOS OS GRUPOS');
+                callback();
+            };
+            drop.appendChild(item);
         });
-        if (setores.has(valAtual)) select.value = valAtual;
     }
 
     async function fullSync() {
@@ -446,7 +507,7 @@
             
             const setoresHist = new Set();
             historico.forEach(item => setoresHist.add(getSetor(item.grupo)));
-            atualizarSelectSetores(setoresHist, 'filtroSetorHist');
+            atualizarMultiSelect(setoresHist, 'dropdownHist', setoresSelecionadosHist, 'labelHist', renderizarHistorico);
             renderizarHistorico();
         }
     }
@@ -584,19 +645,7 @@
         const valorFinal = typeof valorRaw === 'string' ? valorRaw.toUpperCase().trim() : valorRaw;
 
         if (campo === 'separador' && !valorFinal) {
-            openConfirm("DESEJA DEIXAR COMO PARADO E ZERAR OS HORÁRIOS?", async () => {
-                if(isLocal) {
-                    const idx = dadosLocais.findIndex(d => d.id == id);
-                    dadosLocais[idx].separador = "";
-                    dadosLocais[idx].hIni = "";
-                    dadosLocais[idx].hFim = "";
-                    saveLocal();
-                    renderizarTabela();
-                } else {
-                    await _supabase.from('remanejos').update({ separador: "", h_ini: null, h_fim: null }).eq('id', id);
-                }
-                notify("REMANEJO RESETADO", "warning");
-            });
+            desfazerPasso(id, isLocal);
             return;
         }
 
@@ -632,6 +681,34 @@
         if(btn) btn.style.display = 'none';
     }
 
+    async function desfazerPasso(id, isLocal) {
+        const item = isLocal ? dadosLocais.find(d => d.id == id) : dadosNuvem.find(d => d.id == id);
+        if (!item) return;
+
+        if (item.hFim) {
+            await editarSimples(id, isLocal, isLocal ? 'hFim' : 'h_fim', null);
+            notify("FIM REMOVIDO");
+        } else if (item.hIni) {
+            await editarSimples(id, isLocal, isLocal ? 'hIni' : 'h_ini', null);
+            notify("INÍCIO REMOVIDO");
+        } else if (item.separador) {
+            if (!isLocal) {
+                const itemNuvem = item;
+                const paraLocal = { id: Date.now(), remanejo: itemNuvem.remanejo, grupo: itemNuvem.grupo, skus: itemNuvem.skus, separador: "", hIni: "", hFim: "" };
+                dadosLocais.push(paraLocal);
+                saveLocal();
+                await _supabase.from('remanejos').delete().eq('id', id);
+                notify("VOLTOU PARA PARADOS", "warning");
+            } else {
+                const idx = dadosLocais.findIndex(d => d.id == id);
+                dadosLocais[idx].separador = "";
+                saveLocal();
+                renderizarTabela();
+                notify("SEPARADOR REMOVIDO");
+            }
+        }
+    }
+
     async function setHora(id, isLocal, campo) {
         const hora = getHoraLocal();
         if(isLocal && campo === 'hIni') return notify("INSIRA UM SEPARADOR PARA INICIAR", "warning");
@@ -640,13 +717,14 @@
     }
 
     async function editarSimples(id, isLocal, campo, val) {
-        const valorFinal = typeof val === 'string' ? val.toUpperCase().trim() : val;
+        const valorFinal = typeof val === 'string' ? val.toUpperCase().trim() : (val === null ? "" : val);
         if(isLocal) {
             const idx = dadosLocais.findIndex(d => d.id == id);
             dadosLocais[idx][campo] = valorFinal;
             saveLocal();
+            renderizarTabela();
         } else {
-            await _supabase.from('remanejos').update({ [campo]: valorFinal }).eq('id', id);
+            await _supabase.from('remanejos').update({ [campo]: valorFinal === "" ? null : valorFinal }).eq('id', id);
         }
     }
 
@@ -654,8 +732,6 @@
         const tbody = document.getElementById('tableBody');
         const ativosList = document.getElementById('ativosList');
         const term = limparNum(document.getElementById('searchInput').value).toUpperCase();
-        const setorFiltroSidebar = document.getElementById('filtroSetorSidebar').value;
-        const setorFiltroTabela = document.getElementById('filtroSetorTabela').value;
         
         tbody.innerHTML = ""; ativosList.innerHTML = "";
         let p=0, a=0, f=0, rankData = {}, sepsAtivos = new Set(), setoresExistentes = new Set();
@@ -666,8 +742,8 @@
         ];
 
         unificados.forEach(item => setoresExistentes.add(getSetor(item.grupo)));
-        atualizarSelectSetores(setoresExistentes, 'filtroSetorSidebar');
-        atualizarSelectSetores(setoresExistentes, 'filtroSetorTabela');
+        atualizarMultiSelect(setoresExistentes, 'dropdownSidebar', setoresSelecionadosSidebar, 'labelSidebar', renderizarTabela);
+        atualizarMultiSelect(setoresExistentes, 'dropdownTabela', setoresSelecionadosTabela, 'labelTabela', renderizarTabela);
 
         const finalizados = unificados.filter(i => i.hIni && i.hFim).sort((x, y) => y.hFim.localeCompare(x.hFim));
         const emAndamento = unificados.filter(i => i.hIni && !i.hFim).sort((x, y) => x.hIni.localeCompare(y.hIni));
@@ -677,7 +753,10 @@
 
         emAndamento.forEach(item => {
             const setorItem = getSetor(item.grupo);
-            if ((!setorFiltroSidebar || setorItem === setorFiltroSidebar) && (!setorFiltroTabela || setorItem === setorFiltroTabela)) {
+            const matchSidebar = setoresSelecionadosSidebar.length === 0 || setoresSelecionadosSidebar.includes(setorItem);
+            const matchTabela = setoresSelecionadosTabela.length === 0 || setoresSelecionadosTabela.includes(setorItem);
+
+            if (matchSidebar && matchTabela) {
                 const gPartes = (item.grupo || "").split('-');
                 const gExibir = gPartes.length > 1 ? gPartes[1].trim() : gPartes[0].trim();
                 ativosList.innerHTML += `
@@ -693,14 +772,15 @@
             const statusAberto = item.hIni && !item.hFim;
             const statusFinalizado = item.hIni && item.hFim;
             const setorItem = getSetor(item.grupo);
-            const matchSetorTabela = !setorFiltroTabela || setorItem === setorFiltroTabela;
+            const matchTabela = setoresSelecionadosTabela.length === 0 || setoresSelecionadosTabela.includes(setorItem);
+            const matchSidebar = setoresSelecionadosSidebar.length === 0 || setoresSelecionadosSidebar.includes(setorItem);
 
-            if (matchSetorTabela) {
+            if (matchTabela) {
                 if(!item.hIni) p++; 
                 else if(statusAberto) { a++; sepsAtivos.add(item.separador.toUpperCase()); }
                 else if(statusFinalizado) { 
                     f++; 
-                    if ((!setorFiltroSidebar || setorItem === setorFiltroSidebar) && item.separador) {
+                    if (matchSidebar && item.separador) {
                         rankData[item.separador.toUpperCase()] = (rankData[item.separador.toUpperCase()] || 0) + 1; 
                     }
                 }
@@ -710,7 +790,7 @@
             if(filtroAtivo === 'aberto' && !statusAberto) mostrar = false;
             if(filtroAtivo === 'finalizado' && !statusFinalizado) mostrar = false;
             if(!(item.remanejo.includes(term) || item.separador.toUpperCase().includes(term))) mostrar = false;
-            if(!matchSetorTabela) mostrar = false;
+            if(!matchTabela) mostrar = false;
 
             if(mostrar) {
                 const tr = document.createElement('tr');
@@ -745,7 +825,12 @@
                         <button class="btn-time-pill" onclick="setHora('${item.id}', ${item.isLocal}, 'hFim')">FIM</button>
                     </td>
                     <td style="font-weight:700; color:var(--primary)">${calcularDuracao(item.hIni, item.hFim)}</td>
-                    <td><button style="border:none; background:none; cursor:pointer; color:#ddd" onclick="remover('${item.id}', ${item.isLocal})"><i class="fa-solid fa-trash"></i></button></td>`;
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-reset-tool" title="Desfazer Ação" onclick="desfazerPasso('${item.id}', ${item.isLocal})"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+                            <button class="btn-reset-tool danger-hover" title="Remover" onclick="remover('${item.id}', ${item.isLocal})"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>`;
                 tbody.appendChild(tr);
             }
         });
@@ -759,6 +844,7 @@
 
     function renderRanking(data) {
         const list = document.getElementById('rankingList');
+        if (!list) return;
         list.innerHTML = "";
         const sorted = Object.entries(data).sort((a,b) => b[1] - a[1]);
         sorted.forEach(([nome, qtd], i) => {
@@ -810,12 +896,14 @@
         const tbody = document.getElementById('histTableBody');
         const emptyMsg = document.getElementById('histEmptyMsg');
         const term = document.getElementById('searchHistInput').value.toUpperCase().trim();
-        const setorFiltro = document.getElementById('filtroSetorHist').value;
+        
+        if (!tbody) return;
         tbody.innerHTML = "";
         
         historicoFiltradoExibicao = historico.filter(item => {
             const matchSearch = item.remanejo.includes(term) || item.separador.toUpperCase().includes(term);
-            const matchSetor = !setorFiltro || getSetor(item.grupo) === setorFiltro;
+            const setorItem = getSetor(item.grupo);
+            const matchSetor = setoresSelecionadosHist.length === 0 || setoresSelecionadosHist.includes(setorItem);
             return matchSearch && matchSetor;
         }).sort((a, b) => b.hFim.localeCompare(a.hFim));
 
@@ -824,7 +912,7 @@
             tr.innerHTML = `<td><span style="background:#eee; padding:3px 8px; border-radius:5px; font-size:12px;">${item.data.split('-').reverse().join('/')}</span></td><td><b>${item.remanejo}</b></td><td>${item.grupo}</td><td style="color:var(--primary); font-weight:600;">${item.separador}</td><td>${item.hIni}</td><td>${item.hFim}</td><td style="font-weight:700;">${calcularDuracao(item.hIni, item.hFim)}</td>`;
             tbody.appendChild(tr);
         });
-        emptyMsg.style.display = historicoFiltradoExibicao.length === 0 ? 'block' : 'none';
+        if (emptyMsg) emptyMsg.style.display = historicoFiltradoExibicao.length === 0 ? 'block' : 'none';
     }
 
     async function remover(id, isLocal) { 
